@@ -1,5 +1,6 @@
 #@title Training function
 import math
+import itertools
 
 import torch
 import torch.nn.functional as F
@@ -36,7 +37,7 @@ def training_function(text_encoder, vae, unet, args, tokenizer):
         optimizer_class = torch.optim.AdamW
 
     optimizer = optimizer_class(
-        unet.parameters(),  # only optimize unet
+        itertools.chain(unet.parameters(), text_encoder.parameters()),  # only optimize unet and text encoder
         lr=args.learning_rate,
     )
 
@@ -78,7 +79,7 @@ def training_function(text_encoder, vae, unet, args, tokenizer):
         train_dataset, batch_size=args.train_batch_size, shuffle=True, collate_fn=collate_fn
     )
 
-    unet, optimizer, train_dataloader = accelerator.prepare(unet, optimizer, train_dataloader)
+    unet, text_encoder, optimizer, train_dataloader = accelerator.prepare(unet, text_encoder, optimizer, train_dataloader)
 
     # Move text_encode and vae to gpu
     text_encoder.to(accelerator.device)
@@ -104,8 +105,9 @@ def training_function(text_encoder, vae, unet, args, tokenizer):
 
     for epoch in range(num_train_epochs):
         unet.train()
+        text_encoder.train()
         for step, batch in enumerate(train_dataloader):
-            with accelerator.accumulate(unet):
+            with accelerator.accumulate(text_encoder):
                 # Convert images to latent space
                 with torch.no_grad():
                     latents = vae.encode(batch["pixel_values"]).latent_dist.sample()
@@ -124,8 +126,8 @@ def training_function(text_encoder, vae, unet, args, tokenizer):
                 noisy_latents = noise_scheduler.add_noise(latents, noise, timesteps)
 
                 # Get the text embedding for conditioning
-                with torch.no_grad():
-                    encoder_hidden_states = text_encoder(batch["input_ids"])[0]
+                # with torch.no_grad():
+                encoder_hidden_states = text_encoder(batch["input_ids"])[0]
 
                 # Predict the noise residual
                 noise_pred = unet(noisy_latents, timesteps, encoder_hidden_states).sample

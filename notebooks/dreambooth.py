@@ -202,10 +202,10 @@ args = Namespace(
     center_crop=True,
     instance_data_dir=save_path,
     instance_prompt=instance_prompt,
-    learning_rate=3e-06,
+    learning_rate=1e-06,
     max_train_steps=300,
     train_batch_size=1,
-    gradient_accumulation_steps=2,
+    gradient_accumulation_steps=1,
     max_grad_norm=1.0,
     mixed_precision="fp16", # set to "fp16" for mixed-precision training.
     gradient_checkpointing=True, # set this to True to lower the memory usage.
@@ -217,7 +217,7 @@ args = Namespace(
     class_data_dir=prior_preservation_class_folder, 
     class_prompt=class_prompt, 
     num_class_images=num_class_images, 
-    output_dir="dreambooth-concept1",
+    output_dir="dreambooth-concept3",
 )
 
 # %% [markdown]
@@ -247,14 +247,14 @@ except NameError:
 # %% tags=[]
 #@title Run the Stable Diffusion pipeline to generate quick samples in the Notebook
 
-prompt = "a pair of sks eyeglasses placed on a white background" #@param {type:"string"}
+prompt = "a pair of sks eyeglasses with dusk blue gradient tinted lenses" #@param {type:"string"}
 
 num_samples = 3  #@param {type:"number"}
 num_rows = 3 #@param {type:"number"}
 
 all_images = [] 
 for _ in range(num_rows):
-    images = pipe([prompt] * num_samples, num_inference_steps=50, guidance_scale=7.5, seed = 'random').images
+    images = pipe([prompt] * num_samples, num_inference_steps=100, guidance_scale=7.5, seed = 'random').images
     all_images.extend(images)
 
 grid = image_grid(all_images, num_samples, num_rows)
