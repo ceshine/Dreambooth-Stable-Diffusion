@@ -13,6 +13,11 @@
 #     name: python3
 # ---
 
+# %% [markdown]
+# <!-- install xformer via [metrolobo/xformers_wheels](https://github.com/metrolobo/xformers_wheels/releases`): https://github.com/metrolobo/xformers_wheels/releases/download/4c06c79_various6/xformers-0.0.15.dev0_4c06c79.d20221201-cp38-cp38-linux_x86_64.whl -->
+#
+# Install xformers to get better performance: `conda install xformers -c xformers/label/dev`
+
 # %%
 # %load_ext autoreload
 # %autoreload 2
@@ -61,7 +66,7 @@ def image_grid(imgs, rows, cols):
     return grid
 
 
-# %% [markdown] tags=[]
+# %% [markdown] tags=[] jp-MarkdownHeadingCollapsed=true
 # ## Prepare Source Images
 
 # %%
@@ -177,13 +182,13 @@ if(prior_preservation):
 
 text_encoder = CLIPTextModel.from_pretrained(
     pretrained_model_name_or_path, subfolder="text_encoder"
-)
+).float()
 vae = AutoencoderKL.from_pretrained(
     pretrained_model_name_or_path, subfolder="vae"
-)
+).float()
 unet = UNet2DConditionModel.from_pretrained(
     pretrained_model_name_or_path, subfolder="unet"
-)
+).float()
 tokenizer = CLIPTokenizer.from_pretrained(
     pretrained_model_name_or_path,
     subfolder="tokenizer",
@@ -202,22 +207,22 @@ args = Namespace(
     center_crop=True,
     instance_data_dir=save_path,
     instance_prompt=instance_prompt,
-    learning_rate=1e-06,
-    max_train_steps=300,
+    learning_rate=3e-06,
+    max_train_steps=400,
     train_batch_size=1,
-    gradient_accumulation_steps=1,
+    gradient_accumulation_steps=2,
     max_grad_norm=1.0,
     mixed_precision="fp16", # set to "fp16" for mixed-precision training.
     gradient_checkpointing=True, # set this to True to lower the memory usage.
     use_8bit_adam=True, # use 8bit optimizer from bitsandbytes
-    seed=34357,
-    with_prior_preservation=False, 
+    seed=39757,
+    with_prior_preservation=True, 
     prior_loss_weight=prior_loss_weight,
     sample_batch_size=2,
     class_data_dir=prior_preservation_class_folder, 
     class_prompt=class_prompt, 
     num_class_images=num_class_images, 
-    output_dir="dreambooth-concept3",
+    output_dir="dreambooth-concept5",
 )
 
 # %% [markdown]
@@ -247,14 +252,14 @@ except NameError:
 # %% tags=[]
 #@title Run the Stable Diffusion pipeline to generate quick samples in the Notebook
 
-prompt = "a pair of sks eyeglasses with dusk blue gradient tinted lenses" #@param {type:"string"}
+prompt = "a pair of golden-amber-gradient-tinted sks eyeglasses on a wooden table" #@param {type:"string"}
 
 num_samples = 3  #@param {type:"number"}
 num_rows = 3 #@param {type:"number"}
 
 all_images = [] 
 for _ in range(num_rows):
-    images = pipe([prompt] * num_samples, num_inference_steps=100, guidance_scale=7.5, seed = 'random').images
+    images = pipe([prompt] * num_samples, num_inference_steps=60, guidance_scale=7.5, seed = 'random').images
     all_images.extend(images)
 
 grid = image_grid(all_images, num_samples, num_rows)

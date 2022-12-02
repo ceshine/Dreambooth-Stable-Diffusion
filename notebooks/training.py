@@ -65,7 +65,7 @@ def training_function(text_encoder, vae, unet, args, tokenizer):
             pixel_values += [example["class_images"] for example in examples]
 
         pixel_values = torch.stack(pixel_values)
-        pixel_values = pixel_values.to(memory_format=torch.contiguous_format).float()
+        pixel_values = pixel_values.to(memory_format=torch.contiguous_format)
 
         input_ids = tokenizer.pad({"input_ids": input_ids}, padding=True, return_tensors="pt").input_ids
 
@@ -177,7 +177,7 @@ def training_function(text_encoder, vae, unet, args, tokenizer):
             scheduler=PNDMScheduler(
                 beta_start=0.00085, beta_end=0.012, beta_schedule="scaled_linear", skip_prk_steps=True
             ),
-            safety_checker=StableDiffusionSafetyChecker.from_pretrained("CompVis/stable-diffusion-safety-checker"),
-            feature_extractor=CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
+            safety_checker=None,
+            feature_extractor=None, # CLIPFeatureExtractor.from_pretrained("openai/clip-vit-base-patch32"),
         )
         pipeline.save_pretrained(args.output_dir)
